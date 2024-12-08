@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, jsonify
 from flask_migrate import Migrate
 from models import db, Animal, Shelter, AdoptionApplication
 
@@ -61,6 +61,14 @@ def add_shelter():
         return redirect("/admin")
 
     return render_template("add_shelter.html")
+
+@app.route("/api/animals", methods=["GET"])
+def get_animals():
+    animals = Animal.query.all()
+    animal_list = [{"name": a.name, "species": a.species, "breed": a.breed, "age": a.age, 
+                    "description": a.description} for a in animals]
+    return jsonify(animal_list)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

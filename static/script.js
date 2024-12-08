@@ -1,4 +1,25 @@
 let currentAnimalIndex = 0;
+let animalList = [];
+
+async function fetchAnimals() {
+    try {
+        const response = await fetch('/api/animals');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        animalList = await response.json();
+        showAnimal();
+    } catch (error) {
+        console.error("Error fetching animals:", error);
+        const animalContainer = document.getElementById('animal-container');
+        animalContainer.innerHTML = `
+            <div class="text-center mt-5">
+                <h3>Unable to load animals</h3>
+                <p>Please try again later.</p>
+            </div>
+        `;
+    }
+}
 
 function showAnimal() {
     const animalContainer = document.getElementById('animal-container');
@@ -29,15 +50,15 @@ function showAnimal() {
 }
 
 function likeAnimal() {
-    console.log(`Liked: ${animals[currentAnimalIndex].name}`);
+    console.log(`Liked: ${animalList[currentAnimalIndex].name}`);
     currentAnimalIndex++;
     showAnimal();
 }
 
 function dislikeAnimal() {
-    console.log(`Disliked: ${animals[currentAnimalIndex].name}`);
+    console.log(`Disliked: ${animalList[currentAnimalIndex].name}`);
     currentAnimalIndex++;
     showAnimal();
 }
 
-document.addEventListener("DOMContentLoaded", showAnimal);
+document.addEventListener("DOMContentLoaded", fetchAnimals);

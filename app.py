@@ -69,6 +69,11 @@ def get_animals():
                     "description": a.description} for a in animals]
     return jsonify(animal_list)
 
+@app.route("/api/shelters", methods=["GET"])
+def get_shelters():
+    shelters = Shelter.query.all()
+    shelters_list = [{"name": s.name, "address": s.address} for s in shelters]
+    return jsonify(shelters_list)
 
 if __name__ == "__main__":
     app.run(debug=True)

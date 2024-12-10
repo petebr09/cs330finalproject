@@ -21,6 +21,7 @@ class Animal(db.Model):
     breed = db.Column(db.String(100))
     age = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
+    image = db.Column(db.String(255), nullable=True)
     
     shelter_id = db.Column(db.Integer, db.ForeignKey('Shelter.id'), nullable=False)
     
@@ -33,6 +34,6 @@ class AdoptionApplication(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
-    animal_id = db.Column(db.Integer, db.ForeignKey('animal.id'), nullable=False)
+    animal_id = db.Column(db.Integer, db.ForeignKey('Animal.id'), nullable=False)
     message = db.Column(db.Text)
 

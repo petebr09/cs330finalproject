@@ -1,5 +1,4 @@
-from curses import flash
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, flash
 from flask_migrate import Migrate
 from models import db, Animal, Shelter, AdoptionApplication
 
@@ -7,6 +6,9 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///animal_adoption.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+import os
+app.config['SECRET_KEY'] = os.urandom(24)
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -36,6 +38,9 @@ def animal_detail(id):
 
 @app.route("/admin/add-animal", methods=["GET", "POST"])
 def add_animal():
+
+    # NEED TO FIX TO PROPERLY HANDLE IMAGE AND REDIRECT TO ADMIN PAGE AFTER SUBMITTING NEW ANIMAL
+
     if request.method == "POST":
         name = request.form["name"]
         species = request.form["species"]
@@ -83,6 +88,59 @@ def add_shelter():
         return redirect("/admin")
 
     return render_template("add_shelter.html")
+
+@app.route("/admin/edit-animal/<int:id>", methods=["GET", "POST"])
+def edit_animal(id):
+    animal = Animal.query.get_or_404(id)
+    if request.method == "POST":
+        animal.name = request.form["name"]
+        animal.species = request.form["species"]
+        animal.breed = request.form["breed"]
+        animal.age = int(request.form["age"])
+        animal.description = request.form["description"]
+        animal.shelter_id = int(request.form["shelter_id"])
+
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                animal.image = filename
+
+        db.session.commit()
+        flash("Animal updated successfully")
+        return redirect("/admin")
+
+    shelters = Shelter.query.all()
+    return render_template("edit_animal.html", animal=animal, shelters=shelters)
+
+@app.route("/admin/delete-animal/<int:id>", methods=["POST"])
+def delete_animal(id):
+    animal = Animal.query.get_or_404(id)
+    db.session.delete(animal)
+    db.session.commit()
+    flash("Animal deleted successfully")
+    return redirect("/admin")
+
+@app.route("/admin/edit-shelter/<int:id>", methods=["GET", "POST"])
+def edit_shelter(id):
+    shelter = Shelter.query.get_or_404(id)
+    if request.method == "POST":
+        shelter.name = request.form["name"]
+        shelter.address = request.form["address"]
+        db.session.commit()
+        flash("Shelter updated successfully")
+        return redirect("/admin")
+
+    return render_template("edit_shelter.html", shelter=shelter)
+
+@app.route("/admin/delete-shelter/<int:id>", methods=["POST"])
+def delete_shelter(id):
+    shelter = Shelter.query.get_or_404(id)
+    db.session.delete(shelter)
+    db.session.commit()
+    flash("Shelter deleted successfully")
+    return redirect("/admin")
 
 @app.route("/api/animals", methods=["GET"])
 def get_animals():

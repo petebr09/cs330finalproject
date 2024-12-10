@@ -30,9 +30,9 @@
                         <td>{{ shelter.address }}</td>
                         <td>
                             <a href="/admin/edit-shelter/{{ shelter.id }}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="/admin/delete-shelter/{{ shelter.id }}" 
-                               class="btn btn-sm btn-danger" 
-                               onclick="return confirm('Are you sure you want to delete this shelter?');">Delete</a>
+                            <form action="{{ url_for('delete_shelter', id=shelter.id) }}" method="POST">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -66,9 +66,9 @@
                         <td>{{ animal.shelter_id }}</td>
                         <td>
                             <a href="/admin/edit-animal/{{ animal.id }}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="/admin/delete-animal/{{ animal.id }}" 
-                               class="btn btn-sm btn-danger" 
-                               onclick="return confirm('Are you sure you want to delete this animal?');">Delete</a>
+                            <form action="{{ url_for('delete_animal', id=animal.id) }}" method="POST">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

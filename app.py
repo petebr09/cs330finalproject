@@ -9,6 +9,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 migrate = Migrate(app, db)
+def init_app(app):
+    upload_folder = os.path.join(app.root_path, 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
+    app.config['UPLOAD_FOLDER'] = upload_folder
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
 @app.route("/")
 def index():
@@ -42,6 +49,19 @@ def add_animal():
         )
         db.session.add(new_animal)
         db.session.commit()
+        if 'image' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['image']
+        if file.filename == '':
+            image_url = 'default.jpg'
+        elif file and allowed_file(file.filename):
+            filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            image_url = filename
+        else:
+            flash('Invalid file type')
+            return redirect(request.url)
 
         return redirect("/admin")
 

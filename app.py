@@ -1,3 +1,4 @@
+from curses import flash
 from flask import Flask, render_template, request, redirect, jsonify
 from flask_migrate import Migrate
 from models import db, Animal, Shelter, AdoptionApplication

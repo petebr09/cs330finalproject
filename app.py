@@ -41,11 +41,12 @@ def add_animal():
         breed = request.form["breed"]
         age = int(request.form["age"])
         description = request.form["description"]
+        image = request.form["image"]
         shelter_id = int(request.form["shelter_id"])
 
         new_animal = Animal(
             name=name, species=species, breed=breed, age=age, 
-            description=description, shelter_id=shelter_id
+            description=description, image=image, shelter_id=shelter_id
         )
         db.session.add(new_animal)
         db.session.commit()
@@ -86,7 +87,7 @@ def add_shelter():
 def get_animals():
     animals = Animal.query.all()
     animal_list = [{"name": a.name, "species": a.species, "breed": a.breed, "age": a.age, 
-                    "description": a.description} for a in animals]
+                    "description": a.description, "image": a.image} for a in animals]
     return jsonify(animal_list)
 
 @app.route("/api/shelters", methods=["GET"])

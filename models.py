@@ -21,7 +21,7 @@ class Animal(db.Model):
     breed = db.Column(db.String(100))
     age = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
-    image = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.String(255), nullable=False)
     
     shelter_id = db.Column(db.Integer, db.ForeignKey('Shelter.id'), nullable=False)
     

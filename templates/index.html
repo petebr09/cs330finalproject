@@ -3,27 +3,9 @@
 <div class="hero-section text-center py-5 mt-5">
     <div class="container">
         <h1 class="display-4">Find Your New Best Friend</h1>
-        <p class="lead">Browse through our available pets and find your perfect companion</p>
-        <a href="/animals" class="btn btn-primary btn-lg">Browse Animals</a>
+        <p class="lead">Browse through available pets or search to find your perfect companion</p>
+        <a href="/animals" class="btn btn-primary btn-lg">Browse</a>
+        <a href="/search" class="btn btn-primary btn-lg">Search</a>
     </div>
-</div>
-
-<div class="container mt-5">
-    <div id="featured-pets" class="row">
-        {% for animal in animals %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="{{ url_for('static', filename='uploads/' ~ animal.image) }}" class="card-img-top" alt="{{ animal.name }}">
-                <div class="card-body">
-                    <h5 class="card-title">{{ animal.name }}</h5>
-                    <p class="card-text">{{ animal.description }}</p>
-                    <a href="/animals/{{ animal.id }}" class="btn btn-primary">View Details</a>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <p class="text-center">No animals available at the moment.</p>
-        {% endfor %}
-    </div>
-</div>
+</div>    
 {% endblock %}

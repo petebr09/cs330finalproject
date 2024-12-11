@@ -1,153 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Panel</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#shelters">Shelters</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#animals">Animals</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#matches">Pending Matches</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Admin Panel</h1>
+    <p class="text-center">Manage shelters, animals, and matches here.</p>
 
-    <a href="/" class="btn btn-secondary m-3">Back to Main Page</a>
-    <div class="container my-5">
-        <h1 class="text-center mb-4">Admin Panel</h1>
-        <p class="text-center">Manage shelters, animals, and matches here.</p>
-
-        <!-- Shelters Section -->
-        <div id="shelters" class="my-5">
-            <h2>Shelters</h2>
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Address</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for shelter in shelters %}
-                    <tr>
-                        <td>{{ shelter.id }}</td>
-                        <td>{{ shelter.name }}</td>
-                        <td>{{ shelter.address }}</td>
-                        <td class="d-flex gap-2">
-                            <a href="{{ url_for('edit_shelter', id=shelter.id) }}" class="btn btn-sm btn-primary">Edit</a>
-                            <form action="{{ url_for('delete_shelter', id=shelter.id) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="text-center">No shelters found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <a href="/admin/add-shelter" class="btn btn-success">Add New Shelter</a>
-        </div>
-
-        <!-- Animals Section -->
-        <div id="animals" class="my-5">
-            <h2>Animals</h2>
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Species</th>
-                        <th>Breed</th>
-                        <th>Age</th>
-                        <th>Shelter ID</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for animal in animals %}
-                    <tr>
-                        <td>{{ animal.id }}</td>
-                        <td>{{ animal.name }}</td>
-                        <td>{{ animal.species }}</td>
-                        <td>{{ animal.breed }}</td>
-                        <td>{{ animal.age }}</td>
-                        <td>{{ animal.shelter_id }}</td>
-                        <td class="d-flex gap-2">
-                            <a href="{{ url_for('edit_animal', id=animal.id) }}" class="btn btn-sm btn-primary">Edit</a>
-                            <form action="{{ url_for('delete_animal', id=animal.id) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center">No animals found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <a href="/admin/add-animal" class="btn btn-success">Add New Animal</a>
-        </div>
-
-        <!-- Pending Matches Section -->
-        <div id="matches" class="my-5">
-            <h2>Pending Matches</h2>
-            <table class="table table-bordered table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Animal</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for match in matches %}
-                    <tr>
-                        <td>{{ match.animal.name }}</td>
-                        <td>
-                            {% if match.matched %}
-                            <span class="badge bg-success">Matched</span>
-                            {% else %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <form method="POST" action="/admin/match/{{ match.id }}">
-                                <button type="submit" class="btn btn-success">Match</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">No matches found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
+    <div id="shelters" class="my-5">
+        <h2>Shelters</h2>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for shelter in shelters %}
+                <tr>
+                    <td>{{ shelter.id }}</td>
+                    <td>{{ shelter.name }}</td>
+                    <td>{{ shelter.address }}</td>
+                    <td class="d-flex gap-2">
+                        <a href="{{ url_for('edit_shelter', id=shelter.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{{ url_for('delete_shelter', id=shelter.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">No shelters found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="/admin/add-shelter" class="btn btn-success">Add New Shelter</a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+    <div id="animals" class="my-5">
+        <h2>Animals</h2>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Species</th>
+                    <th>Breed</th>
+                    <th>Age</th>
+                    <th>Shelter ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for animal in animals %}
+                <tr>
+                    <td>{{ animal.id }}</td>
+                    <td>{{ animal.name }}</td>
+                    <td>{{ animal.species }}</td>
+                    <td>{{ animal.breed }}</td>
+                    <td>{{ animal.age }}</td>
+                    <td>{{ animal.shelter_id }}</td>
+                    <td class="d-flex gap-2">
+                        <a href="{{ url_for('edit_animal', id=animal.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                        <form action="{{ url_for('delete_animal', id=animal.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No animals found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="/admin/add-animal" class="btn btn-success">Add New Animal</a>
+    </div>
+
+    <div id="matches" class="my-5">
+        <h2>Pending Matches</h2>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Animal</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                <tr>
+                    <td>{{ match.animal.name }}</td>
+                    <td>
+                        {% if match.matched %}
+                        <span class="badge bg-success">Matched</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="/admin/match/{{ match.id }}">
+                            <button type="submit" class="btn btn-success">Match</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center">No matches found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

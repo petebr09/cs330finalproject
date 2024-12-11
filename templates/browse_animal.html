@@ -9,8 +9,8 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ animals[0].name }}</h5>
                     <p class="card-text">{{ animals[0].description }}</p>
-                    <button onclick="likeAnimal({{ animals[0].id }})" class="btn btn-success">Like</button>
                     <button onclick="passAnimal({{ animals[0].id }})" class="btn btn-danger">Pass</button>
+                    <button onclick="likeAnimal({{ animals[0].id }})" class="btn btn-success">Like</button>
                 </div>
             </div>
         {% else %}
@@ -20,7 +20,7 @@
 </div>
 
 <script>
-    let animals = {{ animals|tojson|safe }}; // Safely serialize JSON data
+    let animals = {{ animals|tojson|safe }};
     let currentIndex = 0;
 
     function likeAnimal(animalId) {
@@ -46,8 +46,8 @@
                 <div class="card-body">
                     <h5 class="card-title">${animal.name}</h5>
                     <p class="card-text">${animal.description}</p>
-                    <button onclick="likeAnimal(${animal.id})" class="btn btn-success">Like</button>
                     <button onclick="passAnimal(${animal.id})" class="btn btn-danger">Pass</button>
+                    <button onclick="likeAnimal(${animal.id})" class="btn btn-success">Like</button>
                 </div>
             </div>
         `;

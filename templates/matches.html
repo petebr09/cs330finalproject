@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
 <h2>Your Matches</h2>
 <ul>
     {% for match in matches %}
@@ -6,3 +8,4 @@
         <li>No matches found</li>
     {% endfor %}
 </ul>
+{% endblock content %}

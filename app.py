@@ -72,14 +72,13 @@ def add_animal():
         description = request.form["description"]
         shelter_id = int(request.form["shelter_id"])
 
-        # Handling the file upload
         file = request.files.get('image')
         if file and allowed_file(file.filename):
             filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_url = filename
         else:
-            image_url = 'default.jpg'  #Default image if none provided
+            image_url = 'default.jpg'
 
         new_animal = Animal(
             name=name, species=species, breed=breed, age=age,
@@ -125,13 +124,35 @@ def browse_animals():
         for animal in animals
     ]
     return render_template("browse_animal.html", animals=animals_data)
+
+@app.route("/search")
+def search_animals():
+    name = request.args.get("name", "").strip()
+    animal_type = request.args.get("type", "").strip()
+    shelter_id = request.args.get("shelter", "").strip()
+
+    query = Animal.query
+
+    if name:
+        query = query.filter(Animal.name.ilike(f"%{name}%"))
+    if animal_type:
+        query = query.filter(Animal.species.ilike(f"%{animal_type}%"))
+    if shelter_id:
+        query = query.filter(Animal.shelter_id == shelter_id)
+
+    animals = query.all()
+    shelters = Shelter.query.all()
+    species = db.session.query(Animal.species).distinct().all()
+
+    species_list = [s[0] for s in species]
+    return render_template("search_animal.html", animals=animals, shelters=shelters, species_list=species_list)
+
 @app.route("/admin/edit-animal/<int:id>", methods=["GET", "POST"])
 def edit_animal(id):
     animal = Animal.query.get_or_404(id)
     shelters = Shelter.query.all()
 
     if request.method == "POST":
-        # Update animal fields
         animal.name = request.form["name"]
         animal.species = request.form["species"]
         animal.breed = request.form["breed"]
@@ -150,12 +171,12 @@ def edit_animal(id):
         return redirect("/admin")
 
     return render_template("edit_animal.html", animal=animal, shelters=shelters)
+
 @app.route("/admin/edit-shelter/<int:id>", methods=["GET", "POST"])
 def edit_shelter(id):
     shelter = Shelter.query.get_or_404(id)
 
     if request.method == "POST":
-        # Update shelter fields
         shelter.name = request.form["name"]
         shelter.address = request.form["address"]
 

@@ -1,0 +1,8 @@
+<h2>Your Matches</h2>
+<ul>
+    {% for match in matches %}
+        <li>{{ match.animal.name }} - {{ match.animal.description }}</li>
+    {% else %}
+        <li>No matches found</li>
+    {% endfor %}
+</ul>

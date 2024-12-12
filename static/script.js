@@ -49,11 +49,32 @@ function showAnimal() {
     }
 }
 
-function likeAnimal() {
-    console.log(`Liked: ${animalList[currentAnimalIndex].name}`);
-    currentAnimalIndex++;
-    showAnimal();
+async function likeAnimal(animalId) {
+    console.log("Liked animal:", animalId);
+
+    try {
+        const response = await fetch("/like-animal", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ animal_id: animalId }),
+        });
+
+        if (response.ok) {
+            console.log("Animal liked successfully!");
+        } else {
+            const errorData = await response.json();
+            console.error("Error liking animal:", errorData.error);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
+
+    loadNextAnimal();  // Load the next animal
 }
+
+
 
 function dislikeAnimal() {
     console.log(`Disliked: ${animalList[currentAnimalIndex].name}`);

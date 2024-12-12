@@ -108,7 +108,7 @@ def add_shelter():
 
 @app.route("/match")
 def match_page():
-    matches = Match.query.filter_by(matched=True).all()
+    matches = Match.query.filter_by(matched=False).all() 
     return render_template("matches.html", matches=matches)
 
 @app.route("/animals")
@@ -185,6 +185,40 @@ def edit_shelter(id):
         return redirect("/admin")
 
     return render_template("edit_shelter.html", shelter=shelter)
+
+@app.route("/like-animal", methods=["POST"])
+def like_animal():
+    data = request.get_json()
+    animal_id = data.get("animal_id")
+
+    if not animal_id:
+        return jsonify({"error": "Animal ID is required"}), 400
+
+    animal = Animal.query.get(animal_id)
+    if not animal:
+        return jsonify({"error": "Animal not found"}), 404
+
+    match = Match(animal_id=animal_id, matched=False)
+    db.session.add(match)
+    db.session.commit()
+
+    return jsonify({"message": "Animal liked successfully!"}), 200
+
+@app.route("/approve-match/<int:match_id>", methods=["POST"])
+def approve_match(match_id):
+    match = Match.query.get_or_404(match_id)
+    match.matched = True
+    db.session.commit()
+    flash("Match approved successfully!")
+    return redirect("/match")
+
+@app.route("/reject-match/<int:match_id>", methods=["POST"])
+def reject_match(match_id):
+    match = Match.query.get_or_404(match_id)
+    db.session.delete(match)
+    db.session.commit()
+    flash("Match rejected successfully!")
+    return redirect("/match")
 
 if __name__ == "__main__":
     with app.app_context():

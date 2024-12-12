@@ -1,11 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Your Matches</h2>
-<ul>
-    {% for match in matches %}
-        <li>{{ match.animal.name }} - {{ match.animal.description }}</li>
-    {% else %}
-        <li>No matches found</li>
-    {% endfor %}
-</ul>
-{% endblock content %}
+<h2>Pending Matches</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Animal</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for match in matches %}
+        <tr>
+            <td>{{ match.animal.name }}</td>
+            <td>{{ match.animal.description }}</td>
+            <td>
+                <form method="POST" action="/approve-match/{{ match.id }}" style="display: inline;">
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </form>
+                <form method="POST" action="/reject-match/{{ match.id }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center">No matches found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

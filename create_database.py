@@ -12,7 +12,7 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS Shelter (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    address TEXT
+    address TEXT NOT NULL
 );
 """)
 
@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS Animal (
     age INTEGER NOT NULL,
     description TEXT,
     image TEXT NOT NULL,
+    likes INTEGER DEFAULT 0,
+    matched BOOLEAN DEFAULT FALSE,
     shelter_id INTEGER NOT NULL,
     FOREIGN KEY (shelter_id) REFERENCES Shelter (id)
 );
@@ -35,7 +37,9 @@ CREATE TABLE IF NOT EXISTS AdoptionApplication (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     email TEXT NOT NULL,
+    phone TEXT,
     animal_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending',
     message TEXT,
     FOREIGN KEY (animal_id) REFERENCES Animal (id)
 );

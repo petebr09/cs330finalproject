@@ -1,58 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center">Browse Animals</h1>
-    <div id="animal-container" class="text-center">
-        {% if animals %}
-            <div id="animal-card" class="card mx-auto" style="width: 18rem;">
-                <img src="{{ url_for('uploaded_file', filename=animals[0].image) }}" class="card-img-top" alt="{{ animals[0].name }}">
-                <div class="card-body">
-                    <h5 class="card-title">{{ animals[0].name }}</h5>
-                    <p class="card-text">{{ animals[0].description }}</p>
-                    <button onclick="passAnimal({{ animals[0].id }})" class="btn btn-danger">Pass</button>
-                    <button onclick="likeAnimal({{ animals[0].id }})" class="btn btn-success">Like</button>
-                </div>
-            </div>
-        {% else %}
-            <p class="text-center">No animals available at the moment.</p>
-        {% endif %}
+<div class="container mt-5" style="max-width: 24rem;">
+    {% if animal %}
+    <div class="card mb-4">
+        <img src="{{ url_for('uploaded_file', filename=animal.image) }}" class="card-img-top" alt="{{ animal.name }}">
+        <div class="card-body">
+            <h5 class="card-title">{{ animal.name }}</h5>
+            <p class="card-text">{{ animal.description }}</p>
+            <a href="/animals/{{ animal.id }}" class="btn btn-primary">View Details</a>
+        </div>
     </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="/animals?index={{ current_animal_index - 1 }}" class="btn btn-secondary {% if current_animal_index == 0 %}disabled{% endif %}">Previous</a>
+        <a href="/animals?index={{ current_animal_index + 1 }}" class="btn btn-secondary {% if current_animal_index == total_animals - 1 %}disabled{% endif %}">Next</a>
+    </div>
+    {% else %}
+        <p class="text-center">No more animals available.</p>
+    {% endif %}
 </div>
-
-<script>
-    let animals = {{ animals|tojson|safe }};
-    let currentIndex = 0;
-
-    function likeAnimal(animalId) {
-        console.log("Liked animal:", animalId);
-        loadNextAnimal();
-    }
-
-    function passAnimal(animalId) {
-        console.log("Passed animal:", animalId);
-        loadNextAnimal();
-    }
-
-    function loadNextAnimal() {
-        currentIndex++;
-        if (currentIndex >= animals.length) {
-            document.getElementById("animal-container").innerHTML = "<p class='text-center'>No more animals to browse.</p>";
-            return;
-        }
-        const animal = animals[currentIndex];
-        const cardHtml = `
-            <div id="animal-card" class="card mx-auto" style="width: 18rem;">
-                <img src="/uploads/${animal.image}" class="card-img-top" alt="${animal.name}">
-                <div class="card-body">
-                    <h5 class="card-title">${animal.name}</h5>
-                    <p class="card-text">${animal.description}</p>
-                    <button onclick="passAnimal(${animal.id})" class="btn btn-danger">Pass</button>
-                    <button onclick="likeAnimal(${animal.id})" class="btn btn-success">Like</button>
-                </div>
-            </div>
-        `;
-        document.getElementById("animal-container").innerHTML = cardHtml;
-    }
-</script>
-
 {% endblock %}

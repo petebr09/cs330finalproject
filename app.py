@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, jsonify, flash, send_from_directory
 from flask_migrate import Migrate
-from models import db, Animal, Shelter, Match, AdoptionApplication
+from models import db, Animal, Shelter, AdoptionApplication
 from werkzeug.utils import secure_filename
 import os
 import uuid
@@ -21,7 +21,6 @@ migrate = Migrate(app, db)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
-
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -35,11 +34,12 @@ def index():
 def admin():
     shelters = Shelter.query.all()
     animals = Animal.query.all()
+    adoption_applications = AdoptionApplication.query.order_by(AdoptionApplication.status).all()
     if not shelters:
         shelters = []  
     if not animals:
         animals = []  
-    return render_template("admin.html", shelters=shelters, animals=animals)
+    return render_template("admin.html", shelters=shelters, animals=animals, adoption_applications=adoption_applications)
 
 @app.route("/admin/delete-shelter/<int:id>", methods=["POST"])
 def delete_shelter(id):
@@ -106,24 +106,38 @@ def add_shelter():
 
     return render_template("add_shelter.html")
 
-@app.route("/match")
-def match_page():
-    matches = Match.query.filter_by(matched=False).all() 
-    return render_template("matches.html", matches=matches)
+@app.route('/admin/application/<int:id>/approve', methods=['POST'])
+def approve_application(id):
+    application = AdoptionApplication.query.get_or_404(id)
+    if application.status == 'pending':
+        application.status = 'approved'
+        db.session.commit()
+        flash(f'Application {id} approved.', 'success')
+    else:
+        flash(f'Application {id} cannot be modified.', 'danger')
+    return redirect("/admin")
+
+@app.route('/admin/application/<int:id>/reject', methods=['POST'])
+def reject_application(id):
+    application = AdoptionApplication.query.get_or_404(id)
+    if application.status == 'pending':
+        application.status = 'rejected'
+        db.session.commit()
+        flash(f'Application {id} rejected.', 'danger')
+    else:
+        flash(f'Application {id} cannot be modified.', 'danger')
+    return redirect("/admin")
+
 
 @app.route("/animals")
 def browse_animals():
     animals = Animal.query.all()
-    animals_data = [
-        {
-            "id": animal.id,
-            "name": animal.name,
-            "description": animal.description,
-            "image": animal.image,
-        }
-        for animal in animals
-    ]
-    return render_template("browse_animal.html", animals=animals_data)
+
+    current_animal_index = int(request.args.get('index', 0))
+
+    animal = animals[current_animal_index] if current_animal_index < len(animals) else None
+
+    return render_template("browse_animal.html", animal=animal, current_animal_index=current_animal_index, total_animals=len(animals))
 
 @app.route("/search")
 def search_animals():
@@ -186,39 +200,54 @@ def edit_shelter(id):
 
     return render_template("edit_shelter.html", shelter=shelter)
 
-@app.route("/like-animal", methods=["POST"])
-def like_animal():
-    data = request.get_json()
-    animal_id = data.get("animal_id")
+@app.route('/apply/<int:animal_id>', methods=['GET', 'POST'])
+def apply_for_adoption(animal_id):
+    animal = Animal.query.get_or_404(animal_id)
 
-    if not animal_id:
-        return jsonify({"error": "Animal ID is required"}), 400
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        phone = request.form['phone']
+        message = request.form['message']
 
-    animal = Animal.query.get(animal_id)
-    if not animal:
-        return jsonify({"error": "Animal not found"}), 404
+        print(f"Received Data: Name={name}, Email={email}, Phone={phone}, Message={message}")
 
-    match = Match(animal_id=animal_id, matched=False)
-    db.session.add(match)
-    db.session.commit()
+        new_application = AdoptionApplication(
+            animal_id=animal.id,
+            name=name,
+            email=email,
+            phone=phone,
+            message=message,
+            status='Pending'
+        )
 
-    return jsonify({"message": "Animal liked successfully!"}), 200
+        try:
+            db.session.add(new_application)
+            db.session.commit()
+            flash('Your adoption application has been submitted successfully!', 'success')
+            return render_template('animal_detail.html', animal=animal)
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while submitting your application. Please try again.', 'danger')
 
-@app.route("/approve-match/<int:match_id>", methods=["POST"])
-def approve_match(match_id):
-    match = Match.query.get_or_404(match_id)
-    match.matched = True
-    db.session.commit()
-    flash("Match approved successfully!")
-    return redirect("/match")
+    return render_template('adoption_application.html', animal=animal)
 
-@app.route("/reject-match/<int:match_id>", methods=["POST"])
-def reject_match(match_id):
-    match = Match.query.get_or_404(match_id)
-    db.session.delete(match)
-    db.session.commit()
-    flash("Match rejected successfully!")
-    return redirect("/match")
+@app.route('/api/animals', methods=['GET'])
+def get_animals():
+    animals = Animal.query.all()
+    animal_list = [
+        {
+            "id": animal.id,
+            "name": animal.name,
+            "species": animal.species,
+            "breed": animal.breed,
+            "age": animal.age,
+            "description": animal.description,
+            "image": animal.image,
+        }
+        for animal in animals
+    ]
+    return jsonify(animal_list)
 
 if __name__ == "__main__":
     with app.app_context():

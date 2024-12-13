@@ -78,40 +78,55 @@
         <a href="/admin/add-animal" class="btn btn-success">Add New Animal</a>
     </div>
 
-    <div id="matches" class="my-5">
-        <h2>Pending Matches</h2>
+    <div id="adoptions" class="my-5">
+        <h2>Adoption Applications</h2>
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
                 <tr>
+                    <th>Application ID</th>
                     <th>Animal</th>
+                    <th>Applicant Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Message</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for match in matches %}
+                {% for application in adoption_applications %}
                 <tr>
-                    <td>{{ match.animal.name }}</td>
+                    <td>{{ application.id }}</td>
+                    <td>{{ application.animal.name }}</td>
+                    <td>{{ application.name }}</td>
+                    <td>{{ application.email }}</td>
+                    <td>{{ application.phone }}</td>
+                    <td>{{ application.message }}</td>
                     <td>
-                        {% if match.matched %}
-                        <span class="badge bg-success">Matched</span>
+                        {% if application.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif application.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
                         {% else %}
                         <span class="badge bg-warning text-dark">Pending</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <form method="POST" action="/admin/match/{{ match.id }}">
-                            <button type="submit" class="btn btn-success">Match</button>
+                    <td class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('approve_application', id=application.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success" {% if application.status != 'pending' %}disabled{% endif %}>Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reject_application', id=application.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" {% if application.status != 'pending' %}disabled{% endif %}>Reject</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3" class="text-center">No matches found.</td>
+                    <td colspan="8" class="text-center">No adoption applications found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
+    </div>    
 </div>
 {% endblock %}

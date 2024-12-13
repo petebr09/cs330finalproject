@@ -19,7 +19,8 @@
                 </li>
             </ul>
             <p class="mt-4">{{ animal.description }}</p>
-            <a href="/search" class="btn btn-secondary">Back to Search</a>
+            <a href="/search" class="btn btn-secondary">Back</a>
+            <a href="{{ url_for('apply_for_adoption', animal_id=animal.id) }}" class="btn btn-primary">Adopt</a>
         </div>
     </div>
 </div>

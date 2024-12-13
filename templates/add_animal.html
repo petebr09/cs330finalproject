@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Add a New Animal</h1>
-    <form action="/admin/add-animal" method="POST">
+    <form action="/admin/add-animal" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <input type="text" class="form-control" id="name" name="name" required>
@@ -25,7 +25,7 @@
         </div>
         <div class="mb-3">
             <label for="image" class="form-label">Image</label>
-            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
         </div>
         <div class="mb-3">
             <label for="shelter_id" class="form-label">Shelter</label>

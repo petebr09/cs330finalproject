@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container my-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <h1 class="text-center mb-4">Admin Panel</h1>
     <p class="text-center">Manage shelters, animals, and matches here.</p>
 
@@ -112,11 +125,13 @@
                         {% endif %}
                     </td>
                     <td class="d-flex gap-2">
-                        <form method="POST" action="{{ url_for('approve_application', id=application.id) }}" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-success" {% if application.status != 'pending' %}disabled{% endif %}>Approve</button>
-                        </form>
+                        <!-- Approve Button -->
+                        <form method="POST" action="{{ url_for('approve_application', id=application.id) }}">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>                        
+                        <!-- Reject Button -->
                         <form method="POST" action="{{ url_for('reject_application', id=application.id) }}" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger" {% if application.status != 'pending' %}disabled{% endif %}>Reject</button>
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
                         </form>
                     </td>
                 </tr>

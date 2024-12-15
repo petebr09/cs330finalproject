@@ -8,7 +8,7 @@ class Shelter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(100), nullable=False)
-    
+
     animals = db.relationship('Animal', back_populates='shelter')
 
 
@@ -23,21 +23,22 @@ class Animal(db.Model):
     description = db.Column(db.Text)
     image = db.Column(db.String(255), nullable=False)
     likes = db.Column(db.Integer, default=0)
-    matched = db.Column(db.Boolean, default=False)  
+    matched = db.Column(db.Boolean, default=False)
     shelter_id = db.Column(db.Integer, db.ForeignKey('Shelter.id'), nullable=False)
 
     shelter = db.relationship('Shelter', back_populates='animals')
+    applications = db.relationship('AdoptionApplication', back_populates='animal')
 
 
 class AdoptionApplication(db.Model):
     __tablename__ = 'AdoptionApplication'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20))
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Pending')
     animal_id = db.Column(db.Integer, db.ForeignKey('Animal.id'), nullable=False)
-    status = db.Column(db.String(50), default='Pending')
-    message = db.Column(db.Text)
 
-    animal = db.relationship('Animal', backref='applications')
+    animal = db.relationship('Animal', back_populates='applications')

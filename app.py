@@ -4,8 +4,25 @@ from models import db, Animal, Shelter, AdoptionApplication
 from werkzeug.utils import secure_filename
 import os
 import uuid
+import ssl
+from authlib.integrations.flask_client import OAuth
+from flask import session, url_for, redirect
+from dotenv import load_dotenv
+from flask_mail import Mail, Message 
 
 app = Flask(__name__)
+
+load_dotenv()
+
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///animal_adoption.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -17,6 +34,36 @@ app.config['UPLOAD_FOLDER'] = upload_folder
 
 db.init_app(app)
 migrate = Migrate(app, db)
+
+load_dotenv()
+
+oauth = OAuth(app)
+google_oauth = oauth.register(
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+@app.route("/login")
+def login():
+    session['nonce'] = str(uuid.uuid4())  # Generate and store a nonce
+    redirect_uri = url_for("authorized", _external=True)
+    return google_oauth.authorize_redirect(redirect_uri)
+
+
+@app.route("/authorized")
+def authorized():
+    token = google_oauth.authorize_access_token()
+    try:
+        # Automatically parse the ID token without manually handling nonce
+        user_info = token.get("userinfo")
+        session["google_user"] = user_info
+        return redirect("/admin")
+    except Exception as e:
+        return f"Authorization failed: {str(e)}"
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
@@ -32,6 +79,9 @@ def index():
 
 @app.route("/admin")
 def admin():
+    if "google_user" not in session:
+        return redirect(url_for("login"))
+
     shelters = Shelter.query.all()
     animals = Animal.query.all()
     adoption_applications = AdoptionApplication.query.order_by(AdoptionApplication.status).all()
@@ -108,25 +158,121 @@ def add_shelter():
 
 @app.route('/admin/application/<int:id>/approve', methods=['POST'])
 def approve_application(id):
+    print(f"Processing approval for Application ID: {id}")  # Debugging
     application = AdoptionApplication.query.get_or_404(id)
-    if application.status == 'pending':
+    print(f"Application ID: {application.id}, Current Status: {application.status}")
+
+    if application.status != 'pending':
+        flash(f"Application {id} cannot be modified.", 'danger')
+        return redirect('/admin')
+
+    try:
+        # Update application status
         application.status = 'approved'
         db.session.commit()
-        flash(f'Application {id} approved.', 'success')
-    else:
-        flash(f'Application {id} cannot be modified.', 'danger')
-    return redirect("/admin")
+        print(f"Application ID: {id} status updated to 'approved'.")
+        
+        # Send email notification
+        send_email(
+            recipient=application.email,
+            subject='Adoption Application Approved',
+            body=f"""
+                Dear {application.name},
+
+                Congratulations! Your adoption application for {application.animal.name} has been approved.
+
+                Best regards,
+                The Adoption Team
+            """
+        )
+        print(f"Email sent to {application.email}")
+        flash(f"Application {id} approved and email sent to {application.email}.", 'success')
+    except Exception as e:
+        print(f"Error during approval process for Application ID: {id}: {e}")
+        flash(f"An error occurred while approving Application {id}.", 'danger')
+
+    return redirect('/admin')
 
 @app.route('/admin/application/<int:id>/reject', methods=['POST'])
 def reject_application(id):
     application = AdoptionApplication.query.get_or_404(id)
+    print(f"Processing rejection for Application ID: {application.id}, Current Status: {application.status}")  # Debugging
+
+    if application.status == 'rejected':
+        flash(f'Application {id} is already rejected.', 'info')
+        return redirect('/admin')
+
+    if application.status == 'approved':
+        flash(f'Application {id} has already been approved and cannot be rejected.', 'warning')
+        return redirect('/admin')
+
     if application.status == 'pending':
-        application.status = 'rejected'
-        db.session.commit()
-        flash(f'Application {id} rejected.', 'danger')
+        try:
+            # Update application status
+            application.status = 'rejected'
+            db.session.commit()
+
+            # Send rejection email
+            send_email(
+                recipient=application.email,
+                subject='Adoption Application Rejected',
+                body=f"""
+                    Dear {application.name},
+
+                    We regret to inform you that your adoption application for {application.animal.name} has been rejected.
+
+                    Best regards,
+                    The Adoption Team
+                """
+            )
+            flash(f'Application {id} rejected and email sent to {application.email}.', 'danger')
+        except Exception as e:
+            flash(f'Error while rejecting Application {id}: {str(e)}', 'danger')
     else:
         flash(f'Application {id} cannot be modified.', 'danger')
-    return redirect("/admin")
+
+    return redirect('/admin')
+
+
+# Helper Function to Send Emails
+def send_email(recipient, subject, body):
+    try:
+        msg = Message(subject, recipients=[recipient])
+        msg.body = body
+        mail.send(msg)
+        print(f"Email sent to {recipient}. Subject: {subject}")  # Debugging
+        return True
+    except Exception as e:
+        print(f"Error sending email to {recipient}: {e}")  # Debugging
+        return False
+
+
+@app.route('/test-email')
+def test_email():
+    success = send_email(
+        recipient='your_email@example.com',
+        subject='Test Email',
+        body='This is a test email sent from the Flask app.'
+    )
+    if success:
+        return 'Email sent successfully!'
+    else:
+        return 'Email failed to send.'
+    
+@app.route('/debug/update-status/<int:id>/<string:status>', methods=['GET'])
+def debug_update_status(id, status):
+    application = AdoptionApplication.query.get_or_404(id)
+    try:
+        application.status = status
+        db.session.commit()
+        return f"Application {id} status updated to {status}."
+    except Exception as e:
+        return f"Error: {e}"
+
+@app.route('/debug/application/<int:id>', methods=['GET'])
+def debug_application(id):
+    application = AdoptionApplication.query.get_or_404(id)
+    return f"Application ID: {application.id}, Status: {application.status}"
 
 
 @app.route("/animals")
@@ -225,12 +371,14 @@ def apply_for_adoption(animal_id):
             db.session.add(new_application)
             db.session.commit()
             flash('Your adoption application has been submitted successfully!', 'success')
-            return render_template('animal_detail.html', animal=animal)
+            print("Flash message: Application submitted successfully!")  #Debugging line
         except Exception as e:
             db.session.rollback()
             flash('An error occurred while submitting your application. Please try again.', 'danger')
+            print(f"Flash message: Error - {str(e)}")  #Debug  line/delete later
 
     return render_template('adoption_application.html', animal=animal)
+
 
 @app.route('/api/animals', methods=['GET'])
 def get_animals():
@@ -250,6 +398,6 @@ def get_animals():
     return jsonify(animal_list)
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all() 
-        app.run(debug=True)
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_context.load_cert_chain("cert/apache-selfsigned.crt", "cert/apache-selfsigned.key")
+    app.run(host="0.0.0.0", port=443, ssl_context=ssl_context, debug=True)

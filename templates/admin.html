@@ -116,9 +116,9 @@
                     <td>{{ application.phone }}</td>
                     <td>{{ application.message }}</td>
                     <td>
-                        {% if application.status == 'approved' %}
+                        {% if application.status == 'Approved' or application.status == 'approved'%}
                         <span class="badge bg-success">Approved</span>
-                        {% elif application.status == 'rejected' %}
+                        {% elif application.status == 'Rejected' or application.status == 'rejected' %}
                         <span class="badge bg-danger">Rejected</span>
                         {% else %}
                         <span class="badge bg-warning text-dark">Pending</span>

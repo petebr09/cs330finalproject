@@ -94,6 +94,9 @@ def admin():
 @app.route("/admin/delete-shelter/<int:id>", methods=["POST"])
 def delete_shelter(id):
     shelter = Shelter.query.get_or_404(id)
+    animals = Animal.query.filter_by(shelter_id=id).all()
+    for animal in animals:
+        delete_animal(animal.id)
     db.session.delete(shelter)
     db.session.commit()
     flash("Shelter deleted successfully!")
@@ -102,6 +105,12 @@ def delete_shelter(id):
 @app.route("/admin/delete-animal/<int:id>", methods=["POST"])
 def delete_animal(id):
     animal = Animal.query.get_or_404(id)
+    adoption_applications = AdoptionApplication.query.filter_by(animal_id=id).all()
+    for adoption in adoption_applications:
+        if adoption.status == 'Pending':
+            reject_application(adoption.id)
+        db.session.delete(adoption)
+        db.session.commit()
     db.session.delete(animal)
     db.session.commit()
     flash("Animal deleted successfully!")
@@ -162,17 +171,15 @@ def approve_application(id):
     application = AdoptionApplication.query.get_or_404(id)
     print(f"Application ID: {application.id}, Current Status: {application.status}")
 
-    if application.status != 'pending':
+    if application.status != 'Pending':
         flash(f"Application {id} cannot be modified.", 'danger')
         return redirect('/admin')
 
     try:
-        # Update application status
-        application.status = 'approved'
+        application.status = 'Approved'
         db.session.commit()
-        print(f"Application ID: {id} status updated to 'approved'.")
+        print(f"Application ID: {id} status updated to 'Approved'.")
         
-        # Send email notification
         send_email(
             recipient=application.email,
             subject='Adoption Application Approved',
@@ -187,10 +194,17 @@ def approve_application(id):
         )
         print(f"Email sent to {application.email}")
         flash(f"Application {id} approved and email sent to {application.email}.", 'success')
+
+        animal_id = application.animal_id
+        adoption_applications = AdoptionApplication.query.filter_by(animal_id=animal_id).all()
+        for adoption in adoption_applications:
+            if adoption.status == 'Pending':
+                reject_application(adoption.id)
+
     except Exception as e:
         print(f"Error during approval process for Application ID: {id}: {e}")
         flash(f"An error occurred while approving Application {id}.", 'danger')
-
+    
     return redirect('/admin')
 
 @app.route('/admin/application/<int:id>/reject', methods=['POST'])
@@ -198,18 +212,18 @@ def reject_application(id):
     application = AdoptionApplication.query.get_or_404(id)
     print(f"Processing rejection for Application ID: {application.id}, Current Status: {application.status}")  # Debugging
 
-    if application.status == 'rejected':
+    if application.status == 'Rejected':
         flash(f'Application {id} is already rejected.', 'info')
         return redirect('/admin')
 
-    if application.status == 'approved':
+    if application.status == 'Approved':
         flash(f'Application {id} has already been approved and cannot be rejected.', 'warning')
         return redirect('/admin')
 
-    if application.status == 'pending':
+    if application.status == 'Pending':
         try:
             # Update application status
-            application.status = 'rejected'
+            application.status = 'Rejected'
             db.session.commit()
 
             # Send rejection email
@@ -222,7 +236,7 @@ def reject_application(id):
                     We regret to inform you that your adoption application for {application.animal.name} has been rejected.
 
                     Best regards,
-                    The Adoption Team
+                    Purrfect Match
                 """
             )
             flash(f'Application {id} rejected and email sent to {application.email}.', 'danger')
